@@ -1,10 +1,12 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
 using ApiCatalogo1.DTO;
+using ApiCatalogo1.Pagination;
 using ApiCatalogo1.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace ApiCatalogo1.Controllers
 {
@@ -27,6 +29,58 @@ namespace ApiCatalogo1.Controllers
             {
                 return NotFound("Produtos não encontrados");
             }
+
+            var produtoDtoList = produtos.ToProdutoDTOList();
+
+            return Ok(produtoDtoList);
+        }
+
+        [HttpGet("pagination")]
+        public ActionResult<IEnumerable<ProdutoDTO>> Get([FromQuery] ProdutosParameter produtosParams)
+        {
+            var produtos = _uof.ProdutoRepository.GetProdutos(produtosParams);
+            if (produtos is null)
+            {
+                return NotFound("Produtos não encontrados");
+            }
+
+            var metadata = new
+            {
+                produtos.TotalCount,
+                produtos.PageSize,
+                produtos.CurrentPage,
+                produtos.TotalPages,
+                produtos.HasNext,
+                produtos.HasPrevious
+            };
+
+            Response.Headers.Append("X-Pagiation", JsonConvert.SerializeObject(metadata));
+
+            var produtoDtoList = produtos.ToProdutoDTOList();
+
+            return Ok(produtoDtoList);
+        }
+
+        [HttpGet("filter/preco/pagination")]
+        public ActionResult<IEnumerable<ProdutoDTO>> GetProdutosFiltroPreco([FromQuery] ProdutosFiltroPreco produtosFiltroPreco)
+        {
+            var produtos = _uof.ProdutoRepository.GetProdutosFiltroPreco(produtosFiltroPreco);
+            if (produtos is null)
+            {
+                return NotFound("Produtos não encontrados");
+            }
+
+            var metadata = new
+            {
+                produtos.TotalCount,
+                produtos.PageSize,
+                produtos.CurrentPage,
+                produtos.TotalPages,
+                produtos.HasNext,
+                produtos.HasPrevious
+            };
+
+            Response.Headers.Append("X-Pagiation", JsonConvert.SerializeObject(metadata));
 
             var produtoDtoList = produtos.ToProdutoDTOList();
 

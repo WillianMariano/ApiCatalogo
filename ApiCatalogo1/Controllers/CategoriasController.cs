@@ -2,10 +2,12 @@
 using ApiCatalogo.Models;
 using ApiCatalogo1.DTO;
 using ApiCatalogo1.Filters;
+using ApiCatalogo1.Pagination;
 using ApiCatalogo1.Repositories;
 using ApiCatalogo1.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Net.WebSockets;
 
 namespace ApiCatalogo1.Controllers
@@ -31,13 +33,64 @@ namespace ApiCatalogo1.Controllers
             return Ok(categoriaDtoList);
         }
 
+        [HttpGet("pagination")]
+        public ActionResult<IEnumerable<CategoriaDTO>> Get([FromQuery] CategoriasParameters categoriasParameters)
+        {
+            var categorias = _uof.CategoriaRepository.GetCategorias(categoriasParameters);
+            if (categorias is null)
+            {
+                return NotFound("Produtos não encontrados");
+            }
+
+            var metadata = new
+            {
+                categorias.TotalCount,
+                categorias.PageSize,
+                categorias.CurrentPage,
+                categorias.TotalPages,
+                categorias.HasNext,
+                categorias.HasPrevious
+            };
+
+            Response.Headers.Append("X-Pagiation", JsonConvert.SerializeObject(metadata));
+
+            var categoriaDtoList = categorias.ToCategoriaDTOList();
+
+            return Ok(categoriaDtoList);
+        }
+        [HttpGet("filter/nome/pagination")]
+        public ActionResult<IEnumerable<CategoriaDTO>> GetCategoriasFiltroNome([FromQuery] CategoriasFiltroNome categoriasFiltroNome)
+        {
+            var categorias = _uof.CategoriaRepository.GetCategoriaFiltroNome(categoriasFiltroNome);
+            if (categorias is null)
+            {
+                return NotFound("Produtos não encontrados");
+            }
+
+            var metadata = new
+            {
+                categorias.TotalCount,
+                categorias.PageSize,
+                categorias.CurrentPage,
+                categorias.TotalPages,
+                categorias.HasNext,
+                categorias.HasPrevious
+            };
+
+            Response.Headers.Append("X-Pagiation", JsonConvert.SerializeObject(metadata));
+
+            var categoriaDtoList = categorias.ToCategoriaDTOList();
+
+            return Ok(categoriaDtoList);
+        }
+
         [HttpGet("{id:int}", Name = "ObterCategoria")]
         public ActionResult<CategoriaDTO> Get(int id)
         {
             var categoria = _uof.CategoriaRepository.Get(x => x.CategoriaId == id);
 
             var categoriaDto = categoria.ToCategoriaDTO();
-            
+
             return Ok(categoriaDto);
         }
 
@@ -54,7 +107,7 @@ namespace ApiCatalogo1.Controllers
 
             var novaCategoriaDto = categoriaBd.ToCategoriaDTO();
 
-            return new CreatedAtRouteResult("ObterCategoria", new {id = novaCategoriaDto.CategoriaId}, novaCategoriaDto);
+            return new CreatedAtRouteResult("ObterCategoria", new { id = novaCategoriaDto.CategoriaId }, novaCategoriaDto);
         }
 
         [HttpPut("{id:int}")]
