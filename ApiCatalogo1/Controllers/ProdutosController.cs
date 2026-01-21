@@ -1,5 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using ApiCatalogo1.DTO;
 using ApiCatalogo1.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -19,43 +20,51 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet("produtos/{id}")]
-        public ActionResult<IEnumerable<Produto>> GetProdutosPorCategoria(int id)
+        public ActionResult<IEnumerable<ProdutoDTO>> GetProdutosPorCategoria(int id)
         {
             var produtos = _uof.ProdutoRepository.GetProdutosPorCategoria(id).ToList();
             if (produtos is null)
             {
                 return NotFound("Produtos não encontrados");
             }
-            return Ok(produtos);
+
+            var produtoDtoList = produtos.ToProdutoDTOList();
+
+            return Ok(produtoDtoList);
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Produto>> Get()
+        public ActionResult<IEnumerable<ProdutoDTO>> Get()
         {
             var produtos = _uof.ProdutoRepository.GetAll().ToList();
             if (produtos is null)
             {
                 return NotFound("Produtos não encontrados");
             }
-            return Ok(produtos);
+            var produtoDtoList = produtos.ToProdutoDTOList();
+
+            return Ok(produtoDtoList);
         }
 
         [HttpGet("{id:int}")]
-        public ActionResult<Produto> Get(int id)
+        public ActionResult<ProdutoDTO> Get(int id)
         {
             var produto = _uof.ProdutoRepository.Get(x=>x.ProdutoId == id);
             if (produto is null)
             {
                 return NotFound("Produto não encontrado");
             }
-            return Ok(produto);
+            var produtoDto = produto.ToProdutoDTO();
+            return Ok(produtoDto);
         }
 
         [HttpPost]
-        public ActionResult Post(Produto produto)
+        public ActionResult Post(ProdutoDTO produtoDto)
         {
-            if (produto is null)
+            if (produtoDto is null)
                 return BadRequest();
+
+            var produto = produtoDto.ToProduto();
 
             var produtoBd = _uof.ProdutoRepository.Create(produto);
             _uof.Commit();
@@ -63,13 +72,15 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Produto produto)
+        public ActionResult Put(int id, ProdutoDTO produtoDto)
         {
-            if (produto is null)
+            if (produtoDto is null)
                 return BadRequest();
 
-            if (id != produto.ProdutoId)
+            if (id != produtoDto.ProdutoId)
                 return BadRequest();
+
+            var produto = produtoDto.ToProduto();
 
             var produtoBd = _uof.ProdutoRepository.Update(produto);
             _uof.Commit();
@@ -77,7 +88,7 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id)
+        public ActionResult<ProdutoDTO> Delete(int id)
         {
             var produtoBd = _uof.ProdutoRepository.Get(x=>x.ProdutoId == id);
             if (produtoBd is null)
@@ -87,7 +98,10 @@ namespace ApiCatalogo1.Controllers
 
             var produtoDel = _uof.ProdutoRepository.Delete(produtoBd);
             _uof.Commit();
-            return Ok(produtoDel);
+
+            var produtoDelDto = produtoDel.ToProdutoDTO();
+
+            return Ok(produtoDelDto);
              
         }
     }

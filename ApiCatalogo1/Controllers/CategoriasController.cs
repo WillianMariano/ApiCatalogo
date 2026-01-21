@@ -1,10 +1,12 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using ApiCatalogo1.DTO;
 using ApiCatalogo1.Filters;
 using ApiCatalogo1.Repositories;
 using ApiCatalogo1.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.WebSockets;
 
 namespace ApiCatalogo1.Controllers
 {
@@ -20,46 +22,62 @@ namespace ApiCatalogo1.Controllers
 
         [HttpGet]
         [ServiceFilter(typeof(ApiLoggingFilter))]
-        public ActionResult<IEnumerable<Categoria>> Get()
+        public ActionResult<IEnumerable<CategoriaDTO>> Get()
         {
             var categorias = _uof.CategoriaRepository.GetAll();
-            return Ok(categorias);
+
+            var categoriaDtoList = categorias.ToCategoriaDTOList();
+
+            return Ok(categoriaDtoList);
         }
 
         [HttpGet("{id:int}", Name = "ObterCategoria")]
-        public ActionResult<Categoria> Get(int id)
+        public ActionResult<CategoriaDTO> Get(int id)
         {
             var categoria = _uof.CategoriaRepository.Get(x => x.CategoriaId == id);
-            return Ok(categoria);
+
+            var categoriaDto = categoria.ToCategoriaDTO();
+            
+            return Ok(categoriaDto);
         }
 
         [HttpPost]
-        public ActionResult Post(Categoria categoria)
+        public ActionResult<CategoriaDTO> Post(CategoriaDTO categoriaDto)
         {
-            if (categoria is null)
+            if (categoriaDto is null)
                 return BadRequest();
+
+            var categoria = categoriaDto.ToCategoria();
 
             var categoriaBd = _uof.CategoriaRepository.Create(categoria);
             _uof.Commit();
-            return Ok(categoriaBd);
+
+            var novaCategoriaDto = categoriaBd.ToCategoriaDTO();
+
+            return new CreatedAtRouteResult("ObterCategoria", new {id = novaCategoriaDto.CategoriaId}, novaCategoriaDto);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Categoria categoria)
+        public ActionResult<CategoriaDTO> Put(int id, CategoriaDTO categoriaDto)
         {
-            if (categoria is null)
+            if (categoriaDto is null)
                 return BadRequest();
 
-            if (id != categoria.CategoriaId)
+            if (id != categoriaDto.CategoriaId)
                 return BadRequest();
+
+            var categoria = categoriaDto.ToCategoria();
 
             var categoriaBd = _uof.CategoriaRepository.Update(categoria);
             _uof.Commit();
-            return Ok(categoriaBd);
+
+            var novaCategoriaDto = categoriaBd.ToCategoriaDTO();
+
+            return Ok(novaCategoriaDto);
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id)
+        public ActionResult<CategoriaDTO> Delete(int id)
         {
             var categoria = _uof.CategoriaRepository.Get(x => x.CategoriaId == id);
 
@@ -68,7 +86,10 @@ namespace ApiCatalogo1.Controllers
 
             var categoriaBd = _uof.CategoriaRepository.Delete(categoria);
             _uof.Commit();
-            return Ok(categoriaBd);
+
+            var categoriaDto = categoriaBd.ToCategoriaDTO();
+
+            return Ok(categoriaDto);
         }
     }
 }
