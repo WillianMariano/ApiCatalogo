@@ -1,12 +1,13 @@
 ﻿using ApiCatalogo.Models;
 using ApiCatalogo1.Pagination;
+using X.PagedList;
 
 namespace ApiCatalogo1.Repositories
 {
     public interface ICategoriaRepository:IRepository<Categoria>
     {
-        PagedList<Categoria> GetCategorias(CategoriasParameters categoriasParameters);
+        Task<IPagedList<Categoria>> GetCategoriasAsync(CategoriasParameters categoriasParameters);
 
-        PagedList<Categoria> GetCategoriaFiltroNome(CategoriasFiltroNome categoriasFiltroNome);
+        Task<IPagedList<Categoria>> GetCategoriaFiltroNomeAsync(CategoriasFiltroNome categoriasFiltroNome);
     }
 }

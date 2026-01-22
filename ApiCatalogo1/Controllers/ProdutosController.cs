@@ -22,9 +22,9 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet("produtos/{id}")]
-        public ActionResult<IEnumerable<ProdutoDTO>> GetProdutosPorCategoria(int id)
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetProdutosPorCategoria(int id)
         {
-            var produtos = _uof.ProdutoRepository.GetProdutosPorCategoria(id).ToList();
+            var produtos = await _uof.ProdutoRepository.GetProdutosPorCategoriaAsync(id);
             if (produtos is null)
             {
                 return NotFound("Produtos não encontrados");
@@ -36,9 +36,9 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet("pagination")]
-        public ActionResult<IEnumerable<ProdutoDTO>> Get([FromQuery] ProdutosParameter produtosParams)
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> Get([FromQuery] ProdutosParameter produtosParams)
         {
-            var produtos = _uof.ProdutoRepository.GetProdutos(produtosParams);
+            var produtos = await _uof.ProdutoRepository.GetProdutosAsync(produtosParams);
             if (produtos is null)
             {
                 return NotFound("Produtos não encontrados");
@@ -46,12 +46,12 @@ namespace ApiCatalogo1.Controllers
 
             var metadata = new
             {
-                produtos.TotalCount,
+                produtos.Count,
                 produtos.PageSize,
-                produtos.CurrentPage,
-                produtos.TotalPages,
-                produtos.HasNext,
-                produtos.HasPrevious
+                produtos.PageCount,
+                produtos.TotalItemCount,
+                produtos.HasNextPage,
+                produtos.HasPreviousPage
             };
 
             Response.Headers.Append("X-Pagiation", JsonConvert.SerializeObject(metadata));
@@ -62,9 +62,9 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet("filter/preco/pagination")]
-        public ActionResult<IEnumerable<ProdutoDTO>> GetProdutosFiltroPreco([FromQuery] ProdutosFiltroPreco produtosFiltroPreco)
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetProdutosFiltroPreco([FromQuery] ProdutosFiltroPreco produtosFiltroPreco)
         {
-            var produtos = _uof.ProdutoRepository.GetProdutosFiltroPreco(produtosFiltroPreco);
+            var produtos = await _uof.ProdutoRepository.GetProdutosFiltroPrecoAsync(produtosFiltroPreco);
             if (produtos is null)
             {
                 return NotFound("Produtos não encontrados");
@@ -72,12 +72,12 @@ namespace ApiCatalogo1.Controllers
 
             var metadata = new
             {
-                produtos.TotalCount,
+                produtos.Count,
                 produtos.PageSize,
-                produtos.CurrentPage,
-                produtos.TotalPages,
-                produtos.HasNext,
-                produtos.HasPrevious
+                produtos.PageCount,
+                produtos.TotalItemCount,
+                produtos.HasNextPage,
+                produtos.HasPreviousPage
             };
 
             Response.Headers.Append("X-Pagiation", JsonConvert.SerializeObject(metadata));
@@ -88,9 +88,9 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<ProdutoDTO>> Get()
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> Get()
         {
-            var produtos = _uof.ProdutoRepository.GetAll().ToList();
+            var produtos = await _uof.ProdutoRepository.GetAllAsync();
             if (produtos is null)
             {
                 return NotFound("Produtos não encontrados");
@@ -101,9 +101,9 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public ActionResult<ProdutoDTO> Get(int id)
+        public async Task<ActionResult<ProdutoDTO>> Get(int id)
         {
-            var produto = _uof.ProdutoRepository.Get(x=>x.ProdutoId == id);
+            var produto = await _uof.ProdutoRepository.GetAsync(x => x.ProdutoId == id);
             if (produto is null)
             {
                 return NotFound("Produto não encontrado");
@@ -113,7 +113,7 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post(ProdutoDTO produtoDto)
+        public async Task<ActionResult> Post(ProdutoDTO produtoDto)
         {
             if (produtoDto is null)
                 return BadRequest();
@@ -121,12 +121,12 @@ namespace ApiCatalogo1.Controllers
             var produto = produtoDto.ToProduto();
 
             var produtoBd = _uof.ProdutoRepository.Create(produto);
-            _uof.Commit();
+            await _uof.CommitAsync();
             return new CreatedAtActionResult("Get", "Produtos", new { id = produtoBd.ProdutoId }, produtoBd);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, ProdutoDTO produtoDto)
+        public async Task<ActionResult> Put(int id, ProdutoDTO produtoDto)
         {
             if (produtoDto is null)
                 return BadRequest();
@@ -137,26 +137,26 @@ namespace ApiCatalogo1.Controllers
             var produto = produtoDto.ToProduto();
 
             var produtoBd = _uof.ProdutoRepository.Update(produto);
-            _uof.Commit();
-            return Ok(produtoBd); 
+            await _uof.CommitAsync();
+            return Ok(produtoBd);
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult<ProdutoDTO> Delete(int id)
+        public async Task<ActionResult<ProdutoDTO>> Delete(int id)
         {
-            var produtoBd = _uof.ProdutoRepository.Get(x=>x.ProdutoId == id);
+            var produtoBd = await _uof.ProdutoRepository.GetAsync(x => x.ProdutoId == id);
             if (produtoBd is null)
             {
                 return NotFound("Produto não encontrado");
             }
 
             var produtoDel = _uof.ProdutoRepository.Delete(produtoBd);
-            _uof.Commit();
+            await _uof.CommitAsync();
 
             var produtoDelDto = produtoDel.ToProdutoDTO();
 
             return Ok(produtoDelDto);
-             
+
         }
     }
 }

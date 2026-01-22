@@ -1,7 +1,7 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
-using ApiCatalogo1.Pagination;
-using Microsoft.EntityFrameworkCore;
+using ApiCatalogo1.Pagination; 
+using X.PagedList;
 
 namespace ApiCatalogo1.Repositories
 {
@@ -11,20 +11,22 @@ namespace ApiCatalogo1.Repositories
         { 
         }
 
-        public PagedList<Categoria> GetCategoriaFiltroNome(CategoriasFiltroNome categoriasFiltroNome)
+        public async Task<IPagedList<Categoria>> GetCategoriaFiltroNomeAsync(CategoriasFiltroNome categoriasFiltroNome)
         {
-            var categorias = GetAll().AsQueryable();
+            var categoriasAsync = await GetAllAsync(); 
             if (!string.IsNullOrWhiteSpace(categoriasFiltroNome.Nome))
             {
-                categorias = categorias.Where(x => x.Nome == categoriasFiltroNome.Nome);
+                categoriasAsync = categoriasAsync.Where(x => x.Nome == categoriasFiltroNome.Nome);
             }
-            return PagedList<Categoria>.ToPagedList(categorias, categoriasFiltroNome.PageNumber, categoriasFiltroNome.PageSize);
+            var categoriasFiltradas = await categoriasAsync.ToPagedListAsync(categoriasFiltroNome.PageNumber, categoriasFiltroNome.PageSize);
+            return categoriasFiltradas;
         }
 
-        public PagedList<Categoria> GetCategorias(CategoriasParameters categoriasParameters)
+        public async Task<IPagedList<Categoria>> GetCategoriasAsync(CategoriasParameters categoriasParameters)
         {
-            var categorias = GetAll().OrderBy(x => x.CategoriaId).AsQueryable();
-            var categoriasOrdenados = PagedList<Categoria>.ToPagedList(categorias, categoriasParameters.PageNumber, categoriasParameters.PageSize);
+            var categoriasAsync = await GetAllAsync();
+            var categorias = categoriasAsync.OrderBy(x => x.CategoriaId).AsQueryable();
+            var categoriasOrdenados = await categorias.ToPagedListAsync(categoriasParameters.PageNumber, categoriasParameters.PageSize);
             return categoriasOrdenados;
         }
     }
