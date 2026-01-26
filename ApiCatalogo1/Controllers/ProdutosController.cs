@@ -3,6 +3,7 @@ using ApiCatalogo.Models;
 using ApiCatalogo1.DTO;
 using ApiCatalogo1.Pagination;
 using ApiCatalogo1.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -86,7 +87,8 @@ namespace ApiCatalogo1.Controllers
 
             return Ok(produtoDtoList);
         }
-
+         
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProdutoDTO>>> Get()
         {
@@ -100,6 +102,7 @@ namespace ApiCatalogo1.Controllers
             return Ok(produtoDtoList);
         }
 
+        [Authorize(Policy="UserOnly")]
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ProdutoDTO>> Get(int id)
         {

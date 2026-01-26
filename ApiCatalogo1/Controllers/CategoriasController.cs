@@ -5,6 +5,7 @@ using ApiCatalogo1.Filters;
 using ApiCatalogo1.Pagination;
 using ApiCatalogo1.Repositories;
 using ApiCatalogo1.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -22,6 +23,7 @@ namespace ApiCatalogo1.Controllers
             _uof = uof;
         }
 
+        [Authorize]
         [HttpGet]
         [ServiceFilter(typeof(ApiLoggingFilter))]
         public async Task<ActionResult<IEnumerable<CategoriaDTO>>> Get()
@@ -34,6 +36,7 @@ namespace ApiCatalogo1.Controllers
         }
 
         [HttpGet("pagination")]
+        [Authorize(Policy ="AdminOnly")]
         public async Task<ActionResult<IEnumerable<CategoriaDTO>>> Get([FromQuery] CategoriasParameters categoriasParameters)
         {
             var categorias = await _uof.CategoriaRepository.GetCategoriasAsync(categoriasParameters);
